@@ -1,4 +1,4 @@
-// Using M5 Atom and DX-LR02 915
+// Using M5 Atom and DX-LR02 915 w/ DHT11
 
 #include <Adafruit_NeoPixel.h>
 #include <HardwareSerial.h>
