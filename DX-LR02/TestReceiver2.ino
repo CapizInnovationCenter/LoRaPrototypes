@@ -1,5 +1,4 @@
-//using DX-LR02 and Esp32-C3 Super Mini, preparatation for protoboard
-
+//using DX-LR02 and Esp32-C3 Super Mini, preparatation for protoboard - USE 3.3v
 #include <HardwareSerial.h>
 
 HardwareSerial LoRaSerial(1);
@@ -25,29 +24,43 @@ void setup() {
 void loop() {
   if (LoRaSerial.available()) {
     String response = LoRaSerial.readStringUntil('\n');
-    response.trim(); // remove whitespace/newlines
+    response.trim();
 
     if (response.startsWith("AT+SEND")) {
       Serial.println("Raw: " + response);
 
-      // Split by commas
-      int cntIndex = response.indexOf("CNT=");
-      int tIndex   = response.indexOf("T=");
-      int hIndex   = response.indexOf("H=");
+      // Split into comma-separated tokens
+      int lastComma = response.indexOf(',');
+      String payload = response.substring(lastComma + 1); // after AT+SEND=255,xx,
 
-      if (cntIndex > 0 && tIndex > 0 && hIndex > 0) {
-        int cnt = response.substring(cntIndex + 4, response.indexOf(',', cntIndex)).toInt();
-        int t   = response.substring(tIndex + 2, response.indexOf(',', tIndex)).toInt();
-        int h   = response.substring(hIndex + 2).toInt();
+      int counter = -1, temp = -1, hum = -1;
 
-        Serial.print("Counter: ");
-        Serial.println(cnt);
-        Serial.print("Temperature: ");
-        Serial.println(t);
-        Serial.print("Humidity: ");
-        Serial.println(h);
-        Serial.println("-------------------");
+      // Break payload into fields
+      int start = 0;
+      while (start < payload.length()) {
+        int comma = payload.indexOf(',', start);
+        if (comma == -1) comma = payload.length();
+        String field = payload.substring(start, comma);
+        field.trim();
+
+        if (field.startsWith("CNT=")) {
+          counter = field.substring(4).toInt();
+        } else if (field.startsWith("T=")) {
+          temp = field.substring(2).toInt();
+        } else if (field.startsWith("H=")) {
+          hum = field.substring(2).toInt();
+        }
+
+        start = comma + 1;
       }
+
+      Serial.print("Counter: ");
+      Serial.println(counter);
+      Serial.print("Temperature: ");
+      Serial.println(temp);
+      Serial.print("Humidity: ");
+      Serial.println(hum);
+      Serial.println("-------------------");
     }
   }
 }
